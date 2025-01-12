@@ -183,7 +183,8 @@ class Region {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = 'rgba(200, 200, 200, 0.2)';
+        this.originalColor = 'rgba(200, 200, 200, 0.2)'; // Store original color
+        this.color = this.originalColor;
         this.isResizing = false;
         this.isDragging = false;
         this.resizeHandle = 10;
@@ -798,33 +799,23 @@ function updateNotesExplorer() {
         return;
     }
 
-    // Clear the list
     notesList.innerHTML = '';
 
-    // Debug logging
-    console.log('Current filter:', activeFilter);
-
     const allItems = [
-        ...nodes.map(node => ({ type: node.type, label: node.label, notes: node.notes })),
-        ...regions.map(region => ({ type: 'region', label: region.label, notes: region.notes }))
+        ...nodes.map(node => ({ type: node.type, label: node.label, notes: node.notes, item: node })),
+        ...regions.map(region => ({ type: 'region', label: region.label, notes: region.notes, item: region }))
     ];
-
-    // Debug logging
-    console.log('All items:', allItems);
 
     const filteredItems = allItems.filter(item => {
         if (activeFilter === 'all') return true;
         return item.type === activeFilter;
     });
 
-    // Debug logging
-    console.log('Filtered items:', filteredItems);
-
     filteredItems.forEach(item => {
-        if (!item.notes) return; // Skip items without notes
+        if (!item.notes) return;
 
         const noteCard = document.createElement('div');
-        noteCard.className = 'bg-gray-50 p-3 rounded shadow mb-2';
+        noteCard.className = 'bg-gray-50 p-3 rounded shadow mb-2 cursor-pointer hover:bg-gray-100';
 
         const typeColor = item.type === 'team' ? 'text-blue-600' :
             item.type === 'project' ? 'text-green-600' :
@@ -838,8 +829,58 @@ function updateNotesExplorer() {
             <p class="text-sm text-gray-600">${item.notes}</p>
         `;
 
+        // Add click handler to highlight corresponding item
+        noteCard.addEventListener('click', () => highlightItem(item.item));
+
         notesList.appendChild(noteCard);
     });
+}
+
+function highlightItem(item) {
+    console.log('Highlighting item:', item); // Debug log
+
+    if (item instanceof Region) {
+        const tempColor = 'rgba(255, 0, 0, 0.5)'; // Brighter red for testing
+        const originalColor = 'rgba(200, 200, 200, 0.2)';
+        let flashCount = 6; // Total number of color changes (3 flashes)
+
+        function flashRegion() {
+            console.log('Flashing region, count:', flashCount); // Debug log
+            if (flashCount > 0) {
+                item.color = (flashCount % 2 === 0) ? tempColor : originalColor;
+                drawMindMap();
+                flashCount--;
+                setTimeout(flashRegion, 200);
+            } else {
+                item.color = originalColor;
+                drawMindMap();
+            }
+        }
+
+        flashRegion();
+    } else {
+        // Original node flashing logic
+        const highlightColor = '#ff0000';
+        const originalColor = item.color;
+        const flashDuration = 1000;
+        const flashCount = 3;
+        let flashIteration = 0;
+
+        function flash() {
+            flashIteration++;
+            item.color = item.color === highlightColor ? originalColor : highlightColor;
+            drawMindMap();
+
+            if (flashIteration < flashCount * 2) {
+                setTimeout(flash, flashDuration / (flashCount * 2));
+            } else {
+                item.color = originalColor;
+                drawMindMap();
+            }
+        }
+
+        flash();
+    }
 }
 
 function initializeResizablePanel() {
