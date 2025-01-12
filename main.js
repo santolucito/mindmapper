@@ -19,6 +19,7 @@ let resizingRegion = null;
 let lastMouseX = 0;
 let lastMouseY = 0;
 let activeFilter = 'all';
+let fontSize = 14; // Default font size
 
 class ModalHandler {
     constructor() {
@@ -106,11 +107,23 @@ class Node {
         ctx.fill();
         ctx.stroke();
 
-        // Draw label
+        // Update text drawing with font size and handle newlines
         ctx.fillStyle = '#000';
+        ctx.font = `${fontSize}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this.label, this.x, this.y);
+
+        // Split text into lines
+        const lines = this.label.split('\\n');
+        console.log('Lines:', lines);
+        const lineHeight = fontSize * 1.2; // Add some spacing between lines
+        const totalHeight = lineHeight * (lines.length - 1);
+
+        // Draw each line, centered vertically
+        lines.forEach((line, index) => {
+            const yOffset = (index - (lines.length - 1) / 2) * lineHeight;
+            ctx.fillText(line, this.x, this.y + yOffset);
+        });
     }
 
     isClicked(x, y) {
@@ -254,8 +267,9 @@ class Region {
         ctx.strokeStyle = '#666';
         ctx.stroke();
 
-        // Draw label
+        // Update text drawing with font size
         ctx.fillStyle = '#000';
+        ctx.font = `${fontSize}px Arial`; // Set font size
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(this.label, this.x + 5, this.y + 5);
@@ -373,9 +387,18 @@ function startConnection() {
 function drawConnection(node1, node2) {
     ctx.beginPath();
     ctx.moveTo(node1.x, node1.y);
+
+    // Set line style based on connection type
+    if (node1.type === 'project' && node2.type === 'project') {
+        ctx.setLineDash([5, 5]); // Create dashed line
+    } else {
+        ctx.setLineDash([]); // Solid line for other connections
+    }
+
     ctx.lineTo(node2.x, node2.y);
     ctx.strokeStyle = '#666';
     ctx.stroke();
+    ctx.setLineDash([]); // Reset to solid line after drawing
 }
 
 function drawMindMap() {
@@ -437,14 +460,12 @@ canvas.addEventListener('click', (e) => {
             if (!selectedNode) {
                 selectedNode = clickedNode;
             } else if (selectedNode !== clickedNode) {
-                // Create connection between different types only
-                if (selectedNode.type !== clickedNode.type) {
-                    connections.push({
-                        from: selectedNode,
-                        to: clickedNode
-                    });
-                    drawMindMap();
-                }
+                // Allow connections between any nodes
+                connections.push({
+                    from: selectedNode,
+                    to: clickedNode
+                });
+                drawMindMap();
                 selectedNode = null;
                 isConnecting = false;
                 canvas.style.cursor = 'default';
@@ -453,99 +474,11 @@ canvas.addEventListener('click', (e) => {
     }
 });
 
-canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    lastMouseX = x;
-    lastMouseY = y;
+canvas.addEventListener('mousedown', handleMouseDown);
 
-    if (isCreatingRegion) {
-        regionStart = { x, y };
-    } else {
-        // Check for node drag first
-        draggedNode = nodes.find(node => node.isClicked(x, y));
-        if (draggedNode) {
-            isDragging = true;
-            return;
-        }
+canvas.addEventListener('mousemove', handleMouseMove);
 
-        // Check for region resize
-        resizingRegion = regions.find(region => region.isInResizeHandle(x, y));
-        if (resizingRegion) {
-            return;
-        }
-
-        // Check for region label drag first
-        draggedRegion = regions.find(region => region.isInLabel(x, y));
-        if (draggedRegion) {
-            return;
-        }
-
-        // Check for region drag
-        draggedRegion = regions.find(region => region.isInRegion(x, y));
-    }
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const dx = x - lastMouseX;
-    const dy = y - lastMouseY;
-
-    if (resizingRegion) {
-        resizingRegion.width = Math.max(50, resizingRegion.width + dx);
-        resizingRegion.height = Math.max(50, resizingRegion.height + dy);
-        drawMindMap();
-    } else if (draggedRegion) {
-        draggedRegion.x += dx;
-        draggedRegion.y += dy;
-        drawMindMap();
-    } else if (isDragging && draggedNode) {
-        draggedNode.x = x;
-        draggedNode.y = y;
-        drawMindMap();
-    }
-
-    lastMouseX = x;
-    lastMouseY = y;
-});
-
-canvas.addEventListener('mouseup', async (e) => {
-    if (isCreatingRegion && regionStart) {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        const width = x - regionStart.x;
-        const height = y - regionStart.y;
-
-        if (Math.abs(width) > 10 && Math.abs(height) > 10) {
-            const region = await new Region(
-                Math.min(regionStart.x, x),
-                Math.min(regionStart.y, y),
-                Math.abs(width),
-                Math.abs(height)
-            );
-
-            if (region) {
-                regions.push(region);
-                drawMindMap();
-            }
-        }
-
-        isCreatingRegion = false;
-        regionStart = null;
-        canvas.style.cursor = 'default';
-    }
-
-    isDragging = false;
-    draggedNode = null;
-    draggedRegion = null;
-    resizingRegion = null;
-});
+canvas.addEventListener('mouseup', handleMouseUp);
 
 // Add function to start region creation
 function startRegionCreation() {
@@ -720,7 +653,6 @@ function createSidePanel() {
     return sidePanel;
 }
 
-document.getElementById('clearButton').addEventListener('click', clearMindMap);
 
 function clearMindMap() {
     // Clear all data structures
@@ -821,12 +753,18 @@ function updateNotesExplorer() {
             item.type === 'project' ? 'text-green-600' :
                 'text-yellow-600';
 
+        // Convert URLs to clickable links
+        const notesWithLinks = item.notes.replace(
+            /(https?:\/\/[^\s]+)/g,
+            '<a href="$1" class="text-blue-600 hover:underline" target="_blank" onclick="event.stopPropagation()">$1</a>'
+        );
+
         noteCard.innerHTML = `
             <div class="flex items-center justify-between mb-2">
                 <h3 class="font-semibold">${item.label}</h3>
                 <span class="text-xs ${typeColor} capitalize">${item.type}</span>
             </div>
-            <p class="text-sm text-gray-600">${item.notes}</p>
+            <p class="text-sm text-gray-600">${notesWithLinks}</p>
         `;
 
         // Add click handler to highlight corresponding item
@@ -934,4 +872,110 @@ const cleanup = addEventListeners(canvas, {
     'mousemove': handleMouseMove,
     'mouseup': handleMouseUp
 });
+
+// Add new function to control font size
+function changeFontSize(newSize) {
+    fontSize = newSize;
+    drawMindMap();
+}
+
+document.getElementById('fontSize').addEventListener('input', (e) => {
+    const newSize = parseInt(e.target.value);
+    document.getElementById('fontSizeValue').textContent = `${newSize}px`;
+    changeFontSize(newSize);
+});
+
+function handleMouseDown(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    lastMouseX = x;
+    lastMouseY = y;
+
+    if (isCreatingRegion) {
+        regionStart = { x, y };
+    } else {
+        // Check for node drag first
+        draggedNode = nodes.find(node => node.isClicked(x, y));
+        if (draggedNode) {
+            isDragging = true;
+            return;
+        }
+
+        // Check for region resize
+        resizingRegion = regions.find(region => region.isInResizeHandle(x, y));
+        if (resizingRegion) {
+            return;
+        }
+
+        // Check for region label drag first
+        draggedRegion = regions.find(region => region.isInLabel(x, y));
+        if (draggedRegion) {
+            return;
+        }
+
+        // Check for region drag
+        draggedRegion = regions.find(region => region.isInRegion(x, y));
+    }
+}
+
+function handleMouseMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const dx = x - lastMouseX;
+    const dy = y - lastMouseY;
+
+    if (resizingRegion) {
+        resizingRegion.width = Math.max(50, resizingRegion.width + dx);
+        resizingRegion.height = Math.max(50, resizingRegion.height + dy);
+        drawMindMap();
+    } else if (draggedRegion) {
+        draggedRegion.x += dx;
+        draggedRegion.y += dy;
+        drawMindMap();
+    } else if (isDragging && draggedNode) {
+        draggedNode.x = x;
+        draggedNode.y = y;
+        drawMindMap();
+    }
+
+    lastMouseX = x;
+    lastMouseY = y;
+}
+
+async function handleMouseUp(e) {
+    if (isCreatingRegion && regionStart) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const width = x - regionStart.x;
+        const height = y - regionStart.y;
+
+        if (Math.abs(width) > 10 && Math.abs(height) > 10) {
+            const region = await new Region(
+                Math.min(regionStart.x, x),
+                Math.min(regionStart.y, y),
+                Math.abs(width),
+                Math.abs(height)
+            );
+
+            if (region) {
+                regions.push(region);
+                drawMindMap();
+            }
+        }
+
+        isCreatingRegion = false;
+        regionStart = null;
+        canvas.style.cursor = 'default';
+    }
+
+    isDragging = false;
+    draggedNode = null;
+    draggedRegion = null;
+    resizingRegion = null;
+}
 
