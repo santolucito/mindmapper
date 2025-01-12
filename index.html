@@ -45,6 +45,10 @@
         <button onclick="clearMindMap()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded">
             Clear Mind Map
         </button>
+        <button onclick="toggleNotesExplorer()"
+            class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded">
+            Notes Explorer
+        </button>
     </div>
     <canvas id="mindMap" class="border-2 border-gray-300 rounded-lg shadow-lg" width="800" height="600"></canvas>
     <div id="modalOverlay" class="modal-overlay"></div>
@@ -75,6 +79,24 @@
             <button id="nodeDelete">Delete</button>
             <button id="nodeCancel">Cancel</button>
         </div>
+    </div>
+    <div id="notesExplorer"
+        class="fixed top-0 left-0 w-64 h-screen bg-white shadow-lg transform -translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="p-4 border-b">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-semibold">Notes Explorer</h2>
+                <button class="notes-close-btn text-xl">&times;</button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button id="filterAll" class="px-2 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300">All</button>
+                <button id="filterTeam" class="px-2 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300">Team</button>
+                <button id="filterProject"
+                    class="px-2 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300">Project</button>
+                <button id="filterRegion"
+                    class="px-2 py-1 bg-gray-200 rounded text-sm hover:bg-gray-300">Region</button>
+            </div>
+        </div>
+        <div id="notesList" class="p-4 space-y-4 overflow-y-auto" style="height: calc(100vh - 116px);"></div>
     </div>
     <script src="main.js"></script>
 </body>

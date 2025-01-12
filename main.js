@@ -18,6 +18,7 @@ let draggedRegion = null;
 let resizingRegion = null;
 let lastMouseX = 0;
 let lastMouseY = 0;
+let activeFilter = 'all';
 
 class Node {
     constructor(x, y, type) {
@@ -624,6 +625,7 @@ function showSidePanel(item) {
     // Save notes when textarea changes
     textarea.oninput = () => {
         item.notes = textarea.value;
+        updateNotesExplorer();
     };
 
     sidePanel.style.right = '0';
@@ -675,3 +677,97 @@ function clearMindMap() {
     // Reset cursor
     canvas.style.cursor = 'default';
 }
+
+function toggleNotesExplorer() {
+    const explorer = document.getElementById('notesExplorer');
+    explorer.classList.toggle('active');
+
+    // Add close button functionality here
+    const closeBtn = explorer.querySelector('.notes-close-btn');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            explorer.classList.remove('active');
+        };
+    }
+
+    // Update filter buttons
+    const buttons = explorer.querySelectorAll('button[id^="filter"]');
+    buttons.forEach(button => {
+        button.classList.toggle('active', button.id === `filter${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)}`);
+    });
+
+    if (explorer.classList.contains('active')) {
+        updateNotesExplorer();
+    }
+}
+
+function updateNotesExplorer() {
+    const notesList = document.getElementById('notesList');
+    if (!notesList) {
+        console.error('Notes list element not found');
+        return;
+    }
+
+    // Clear the list
+    notesList.innerHTML = '';
+
+    // Debug logging
+    console.log('Current filter:', activeFilter);
+
+    const allItems = [
+        ...nodes.map(node => ({ type: node.type, label: node.label, notes: node.notes })),
+        ...regions.map(region => ({ type: 'region', label: region.label, notes: region.notes }))
+    ];
+
+    // Debug logging
+    console.log('All items:', allItems);
+
+    const filteredItems = allItems.filter(item => {
+        if (activeFilter === 'all') return true;
+        return item.type === activeFilter;
+    });
+
+    // Debug logging
+    console.log('Filtered items:', filteredItems);
+
+    filteredItems.forEach(item => {
+        if (!item.notes) return; // Skip items without notes
+
+        const noteCard = document.createElement('div');
+        noteCard.className = 'bg-gray-50 p-3 rounded shadow mb-2';
+
+        const typeColor = item.type === 'team' ? 'text-blue-600' :
+            item.type === 'project' ? 'text-green-600' :
+                'text-yellow-600';
+
+        noteCard.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="font-semibold">${item.label}</h3>
+                <span class="text-xs ${typeColor} capitalize">${item.type}</span>
+            </div>
+            <p class="text-sm text-gray-600">${item.notes}</p>
+        `;
+
+        notesList.appendChild(noteCard);
+    });
+}
+
+// Update filter button event listeners
+['All', 'Team', 'Project', 'Region'].forEach(filterType => {
+    const button = document.getElementById(`filter${filterType}`);
+    if (button) {
+        button.addEventListener('click', () => {
+            console.log(`${filterType} filter clicked`); // Debug logging
+            activeFilter = filterType.toLowerCase();
+            updateNotesExplorer();
+
+            // Update active button styling
+            document.querySelectorAll('button[id^="filter"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        });
+    } else {
+        console.error(`Button filter${filterType} not found`);
+    }
+});

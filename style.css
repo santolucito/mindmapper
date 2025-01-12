@@ -106,3 +106,45 @@
     resize: none;
     font-family: inherit;
 }
+
+#notesExplorer {
+    z-index: 900;
+}
+
+#notesExplorer.active {
+    transform: translateX(0);
+}
+
+#notesExplorer button.active {
+    background-color: #4F46E5;
+    color: white;
+}
+
+#notesList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#notesList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#notesList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+#notesList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.notes-close-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.notes-close-btn:hover {
+    background-color: #f3f4f6;
+    border-radius: 4px;
+}
