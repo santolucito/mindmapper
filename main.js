@@ -20,6 +20,73 @@ let lastMouseX = 0;
 let lastMouseY = 0;
 let activeFilter = 'all';
 
+class ModalHandler {
+    constructor() {
+        this.modal = document.getElementById('renameModal');
+        this.input = document.getElementById('renameInput');
+        this.confirmBtn = document.getElementById('confirmRename');
+        this.cancelBtn = document.getElementById('cancelRename');
+        this.deleteBtn = document.getElementById('deleteRename');
+    }
+
+    show(options = {}) {
+        const {
+            initialValue = '',
+            placeholder = '',
+            onConfirm,
+            onCancel,
+            onDelete,
+            showDelete = true
+        } = options;
+
+        this.input.value = initialValue;
+        this.input.placeholder = placeholder;
+        this.modal.style.display = 'block';
+        this.deleteBtn.style.display = showDelete ? 'block' : 'none';
+
+        const cleanup = () => {
+            this.confirmBtn.removeEventListener('click', handleConfirm);
+            this.cancelBtn.removeEventListener('click', handleCancel);
+            this.deleteBtn.removeEventListener('click', handleDelete);
+            this.input.removeEventListener('keypress', handleKeyPress);
+            this.modal.style.display = 'none';
+        };
+
+        const handleConfirm = () => {
+            const value = this.input.value.trim();
+            if (value && onConfirm) {
+                onConfirm(value);
+            }
+            cleanup();
+        };
+
+        const handleCancel = () => {
+            if (onCancel) onCancel();
+            cleanup();
+        };
+
+        const handleDelete = () => {
+            if (onDelete) onDelete();
+            cleanup();
+        };
+
+        const handleKeyPress = (e) => {
+            if (e.key === 'Enter') handleConfirm();
+            else if (e.key === 'Escape') handleCancel();
+        };
+
+        this.confirmBtn.addEventListener('click', handleConfirm);
+        this.cancelBtn.addEventListener('click', handleCancel);
+        this.deleteBtn.addEventListener('click', handleDelete);
+        this.input.addEventListener('keypress', handleKeyPress);
+
+        this.input.focus();
+        this.input.select();
+    }
+}
+
+const modalHandler = new ModalHandler();
+
 class Node {
     constructor(x, y, type) {
         this.id = Math.random().toString(36).substr(2, 9); // Generate unique ID
@@ -805,4 +872,25 @@ function initializeResizablePanel() {
         document.body.style.cursor = 'default';
     });
 }
+
+function addEventListeners(element, events) {
+    const cleanup = () => {
+        Object.entries(events).forEach(([event, handler]) => {
+            element.removeEventListener(event, handler);
+        });
+    };
+
+    Object.entries(events).forEach(([event, handler]) => {
+        element.addEventListener(event, handler);
+    });
+
+    return cleanup;
+}
+
+// Usage example:
+const cleanup = addEventListeners(canvas, {
+    'mousedown': handleMouseDown,
+    'mousemove': handleMouseMove,
+    'mouseup': handleMouseUp
+});
 
