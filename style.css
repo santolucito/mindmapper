@@ -109,6 +109,10 @@
 
 #notesExplorer {
     z-index: 900;
+    min-width: 200px;
+    max-width: 800px;
+    resize: horizontal;
+    overflow: auto;
 }
 
 #notesExplorer.active {
@@ -137,14 +141,21 @@
     background: #555;
 }
 
-.notes-close-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    padding: 4px 8px;
+.resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: ew-resize;
+    background: transparent;
 }
 
-.notes-close-btn:hover {
-    background-color: #f3f4f6;
-    border-radius: 4px;
+.resize-handle:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+#notesList {
+    height: calc(100vh - 116px);
+    width: 100%;
 }

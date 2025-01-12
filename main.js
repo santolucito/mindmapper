@@ -699,6 +699,29 @@ function toggleNotesExplorer() {
     if (explorer.classList.contains('active')) {
         updateNotesExplorer();
     }
+
+    // Update filter button event listeners
+    ['All', 'Team', 'Project', 'Region'].forEach(filterType => {
+        const button = document.getElementById(`filter${filterType}`);
+        if (button) {
+            button.addEventListener('click', () => {
+                console.log(`${filterType} filter clicked`); // Debug logging
+                activeFilter = filterType.toLowerCase();
+                updateNotesExplorer();
+
+                // Update active button styling
+                document.querySelectorAll('button[id^="filter"]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+            });
+        } else {
+            console.error(`Button filter${filterType} not found`);
+        }
+    });
+
+    initializeResizablePanel();
+
 }
 
 function updateNotesExplorer() {
@@ -752,22 +775,34 @@ function updateNotesExplorer() {
     });
 }
 
-// Update filter button event listeners
-['All', 'Team', 'Project', 'Region'].forEach(filterType => {
-    const button = document.getElementById(`filter${filterType}`);
-    if (button) {
-        button.addEventListener('click', () => {
-            console.log(`${filterType} filter clicked`); // Debug logging
-            activeFilter = filterType.toLowerCase();
-            updateNotesExplorer();
+function initializeResizablePanel() {
+    const notesExplorer = document.getElementById('notesExplorer');
+    const resizeHandle = notesExplorer.querySelector('.resize-handle');
+    let isResizing = false;
+    let startWidth;
+    let startX;
 
-            // Update active button styling
-            document.querySelectorAll('button[id^="filter"]').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-        });
-    } else {
-        console.error(`Button filter${filterType} not found`);
-    }
-});
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.pageX;
+        startWidth = notesExplorer.offsetWidth;
+
+        document.body.style.cursor = 'ew-resize';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const width = startWidth - (e.pageX - startX);
+        if (width >= 200 && width <= 800) { // Min and max width constraints
+            notesExplorer.style.width = `${width}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+    });
+}
+
