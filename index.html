@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Team Mind Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        canvas {
+            border: 1px solid #000;
+        }
+
+        .controls {
+            margin: 10px 0;
+        }
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-100 p-4">
+    <div class="controls space-x-2 mb-4">
+        <button onclick="addNode('team')"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+            Add Team Member
+        </button>
+        <button onclick="addNode('project')"
+            class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded">
+            Add Project
+        </button>
+        <button onclick="startConnection()"
+            class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded">
+            Connect Nodes
+        </button>
+        <button onclick="startRegionCreation()"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded">
+            Create Region
+        </button>
+        <button onclick="exportToJson()"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+            Export to JSON
+        </button>
+        <button onclick="loadFromJson()"
+            class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+            Load Mind Map
+        </button>
+        <button onclick="clearMindMap()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded">
+            Clear Mind Map
+        </button>
+    </div>
+    <canvas id="mindMap" class="border-2 border-gray-300 rounded-lg shadow-lg" width="800" height="600"></canvas>
+    <div id="modalOverlay" class="modal-overlay"></div>
+    <div id="renameModal" class="modal bg-white rounded-lg shadow-xl">
+        <div class="modal-content p-4">
+            <input type="text" id="renameInput" placeholder="Enter new name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="modal-buttons mt-4 flex justify-end space-x-2">
+                <button id="confirmRename"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+                    Confirm
+                </button>
+                <button id="deleteRename"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+                    Delete
+                </button>
+                <button id="cancelRename"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="nodeOptionsModal" class="modal">
+        <div class="modal-content">
+            <h3>Node Options</h3>
+            <button id="nodeRename">Rename</button>
+            <button id="nodeDelete">Delete</button>
+            <button id="nodeCancel">Cancel</button>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+
+</html>
